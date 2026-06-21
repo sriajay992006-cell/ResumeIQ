@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ResumeIQ — Builder & ATS Checker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header>
+  <div class="logo">Resume<span>IQ</span><span class="logo-badge">AI</span></div>
+  <div class="header-actions">
+    <button class="btn btn-ghost" id="saveBtn">💾 Save Resume</button>
+    <button class="btn btn-ghost" id="loadBtn">📂 Load</button>
+    <button class="btn btn-ghost" id="exportPdfBtn">⬇ Export PDF</button>
+    <button class="btn btn-primary" onclick="switchTab('ats')">✦ Check ATS Score</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('builder')">📝 Resume Builder</div>
+  <div class="tab" onclick="switchTab('ats')">📊 ATS Checker</div>
+  <div class="tab" onclick="switchTab('ai')">✦ AI Writing Help</div>
+  <div class="tab" onclick="switchTab('jobs')">🗂 Job Tracker</div>
+</div>
+
+<div class="app-body">
+  <!-- ═══ LEFT PANEL ═══ -->
+  <div class="left-panel">
+
+    <!-- BUILDER TAB -->
+    <div id="tab-builder" class="tab-panel active">
+      <div class="section-block">
+        <div class="section-title"><span class="dot"></span>Personal Information</div>
+        <div class="field-row">
+          <div class="field-group"><label>First Name</label><input type="text" id="fname" placeholder="John" oninput="updatePreview()"></div>
+          <div class="field-group"><label>Last Name</label><input type="text" id="lname" placeholder="Doe" oninput="updatePreview()"></div>
+        </div>
+        <div class="field-group"><label>Job Title / Role</label><input type="text" id="jobtitle" placeholder="Senior Software Engineer" oninput="updatePreview()"></div>
+        <div class="field-row">
+          <div class="field-group"><label>Email</label><input type="email" id="email" placeholder="john@example.com" oninput="updatePreview()"></div>
+          <div class="field-group"><label>Phone</label><input type="tel" id="phone" placeholder="+1 (555) 000-0000" oninput="updatePreview()"></div>
+        </div>
+        <div class="field-row">
+          <div class="field-group"><label>Location</label><input type="text" id="location" placeholder="New York, NY" oninput="updatePreview()"></div>
+          <div class="field-group"><label>LinkedIn / Website</label><input type="url" id="website" placeholder="linkedin.com/in/johndoe" oninput="updatePreview()"></div>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-title"><span class="dot"></span>Professional Summary</div>
+        <div class="field-group"><textarea id="summary" placeholder="A results-driven engineer with 5+ years of experience..." oninput="updatePreview()"></textarea></div>
+        <button class="add-btn" onclick="aiWriteSummary()">✦ Write with AI</button>
+      </div>
+
+      <div class="section-block">
+        <div class="section-title"><span class="dot"></span>Work Experience</div>
+        <div id="exp-list"></div>
+        <button class="add-btn" onclick="addExperience()">+ Add Experience</button>
+      </div>
+
+      <div class="section-block">
+        <div class="section-title"><span class="dot"></span>Education</div>
+        <div id="edu-list"></div>
+        <button class="add-btn" onclick="addEducation()">+ Add Education</button>
+      </div>
+
+      <div class="section-block">
+        <div class="section-title"><span class="dot"></span>Skills</div>
+        <div class="field-group"><label>Skills (comma-separated)</label><input type="text" id="skills" placeholder="Python, React, AWS, SQL, Docker..." oninput="updatePreview()"></div>
+        <button class="add-btn" style="margin-top:0.5rem;" onclick="aiSuggestSkills()">✦ Suggest Skills with AI</button>
+      </div>
+
+      <div class="section-block">
+        <div class="section-title"><span class="dot"></span>Certifications</div>
+        <div id="cert-list"></div>
+        <button class="add-btn" onclick="addCert()">+ Add Certification</button>
+      </div>
+
+      <div class="section-block">
+        <div class="section-title"><span class="dot"></span>Projects</div>
+        <div id="proj-list"></div>
+        <button class="add-btn" onclick="addProject()">+ Add Project</button>
+      </div>
+    </div>
+
+    <!-- ATS TAB -->
+    <div id="tab-ats" class="tab-panel">
+      <div class="ats-input-area">
+
+        <!-- Mode toggle -->
+        <div class="mode-toggle-wrap">
+          <button class="mode-toggle-btn active" id="mode-btn-review" onclick="setAtsMode('review')">
+            📋 Resume Review
+          </button>
+          <button class="mode-toggle-btn" id="mode-btn-match" onclick="setAtsMode('match')">
+            🎯 Job Match Analysis
+          </button>
+        </div>
+        <p class="mode-desc" id="mode-desc">Upload your resume to get an instant ATS health score — no job description needed.</p>
+
+        <!-- Upload zone -->
+        <div class="field-group">
+          <label>Upload Resume File (PDF / DOCX)</label>
+          <div class="upload-zone" id="uploadZone" onclick="document.getElementById('resume-file').click()">
+            <div class="upload-icon-sm">📄</div>
+            <span id="upload-label">Click to upload or drag & drop</span>
+            <span style="font-size:0.72rem;color:var(--slate-light);">PDF or DOCX · Max 16MB</span>
+          </div>
+          <input type="file" id="resume-file" accept=".pdf,.docx" style="display:none;" onchange="handleFileSelect(this)">
+        </div>
+
+        <!-- OR divider -->
+        <div style="display:flex;align-items:center;gap:0.75rem;margin:0.25rem 0 0.6rem;">
+          <hr style="flex:1;border:none;border-top:1px solid var(--border);">
+          <span style="font-size:0.68rem;color:var(--slate-light);font-weight:700;letter-spacing:0.06em;">OR USE BUILT RESUME</span>
+          <hr style="flex:1;border:none;border-top:1px solid var(--border);">
+        </div>
+
+        <!-- Job info (visible in both modes) -->
+        <div class="field-row">
+          <div class="field-group"><label>Target Job Title</label><input type="text" id="ats-job-title" placeholder="Software Engineer"></div>
+          <div class="field-group"><label>Company Name</label><input type="text" id="ats-company" placeholder="Acme Corp"></div>
+        </div>
+
+        <!-- Job description — only shown in Job Match mode -->
+        <div id="jd-section" style="display:none;">
+          <div class="field-group">
+            <label>Job Description <span style="color:var(--red);font-size:0.7rem;">*required</span></label>
+            <textarea id="job-description" placeholder="Paste the full job description here. ResumeIQ will extract meaningful technical keywords and calculate how well your resume matches the role..." style="min-height:150px;"></textarea>
+          </div>
+        </div>
+
+        <button class="analyze-btn" id="analyze-btn" onclick="analyzeATS()">
+          <span id="analyze-btn-text">✦ Analyze My Resume</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- AI TAB -->
+    <div id="tab-ai" class="tab-panel">
+      <div class="ats-input-area">
+        <div class="section-title" style="margin-bottom:1rem;"><span class="dot"></span>AI Writing Assistant</div>
+        <label>What do you need help with?</label>
+        <div class="ai-suggestion-row" style="margin-top:0.5rem;margin-bottom:0.75rem;">
+          <span class="ai-chip active" onclick="selectChip(this,'summary')">Professional Summary</span>
+          <span class="ai-chip" onclick="selectChip(this,'bullets')">Job Bullets</span>
+          <span class="ai-chip" onclick="selectChip(this,'skills')">Skills List</span>
+          <span class="ai-chip" onclick="selectChip(this,'cover')">Cover Letter</span>
+          <span class="ai-chip" onclick="selectChip(this,'improve')">Resume Suggestions</span>
+        </div>
+        <div class="field-group">
+          <label>Context (role, industry, highlights)</label>
+          <textarea id="ai-context" placeholder="e.g. Software engineer with 5 years at startups, specialized in Python and cloud infra. Looking for a senior role at a fintech company." style="min-height:90px;"></textarea>
+        </div>
+        <div class="field-group" id="cover-extra" style="display:none;">
+          <label>Company Name</label>
+          <input type="text" id="ai-company" placeholder="Acme Corp">
+        </div>
+        <div class="field-group" id="improve-extra" style="display:none;">
+          <label>Job Description (for targeted suggestions)</label>
+          <textarea id="ai-jd" placeholder="Paste the job description for targeted improvement suggestions..." style="min-height:80px;"></textarea>
+        </div>
+        <button class="analyze-btn" id="ai-generate-btn" onclick="runAIHelp()">
+          <span id="ai-btn-text">✦ Generate with AI</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- JOB TRACKER TAB -->
+    <div id="tab-jobs" class="tab-panel">
+      <div class="section-block">
+        <div class="section-title"><span class="dot"></span>Add Application</div>
+        <div class="field-row">
+          <div class="field-group"><label>Job Title</label><input type="text" id="new-job-title" placeholder="Software Engineer"></div>
+          <div class="field-group"><label>Company</label><input type="text" id="new-job-company" placeholder="Acme Corp"></div>
+        </div>
+        <div class="field-group"><label>Job URL (optional)</label><input type="url" id="new-job-url" placeholder="https://..."></div>
+        <div class="field-row">
+          <div class="field-group">
+            <label>Status</label>
+            <select id="new-job-status">
+              <option value="saved">📌 Saved</option>
+              <option value="applied">📤 Applied</option>
+              <option value="interview">💬 Interview</option>
+              <option value="offer">🎉 Offer</option>
+              <option value="rejected">❌ Rejected</option>
+            </select>
+          </div>
+          <div class="field-group"><label>Date Applied</label><input type="text" id="new-job-date" placeholder="Jun 2024"></div>
+        </div>
+        <div class="field-group"><label>Notes</label><textarea id="new-job-notes" rows="2" placeholder="Recruiter name, salary range, next steps..."></textarea></div>
+        <button class="analyze-btn" style="margin-top:0;" onclick="addJob()"><span>+ Add Application</span></button>
+      </div>
+
+      <div class="section-block" style="border-bottom:none;">
+        <div class="section-title" style="margin-bottom:0.75rem;"><span class="dot"></span>Filter by Status</div>
+        <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">
+          <button class="filter-chip active" onclick="filterJobs('all',this)">All</button>
+          <button class="filter-chip" onclick="filterJobs('saved',this)">📌 Saved</button>
+          <button class="filter-chip" onclick="filterJobs('applied',this)">📤 Applied</button>
+          <button class="filter-chip" onclick="filterJobs('interview',this)">💬 Interview</button>
+          <button class="filter-chip" onclick="filterJobs('offer',this)">🎉 Offer</button>
+          <button class="filter-chip" onclick="filterJobs('rejected',this)">❌ Rejected</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end left-panel -->
+
+  <!-- ═══ RIGHT PANEL ═══ -->
+  <div class="right-panel">
+    <div class="right-content" id="right-content">
+
+      <!-- Resume Preview (hidden in jobs view) -->
+      <div class="resume-preview-wrapper" id="resume-preview-wrapper">
+        <div class="preview-toolbar">
+          <span>Live Preview</span>
+          <div style="display:flex;gap:0.5rem;">
+            <button class="btn btn-ghost" style="font-size:0.72rem;padding:0.3rem 0.7rem;" onclick="openBulletImprover()">✦ Improve Bullets</button>
+            <button class="btn btn-ghost" style="font-size:0.72rem;padding:0.3rem 0.7rem;" id="previewExportBtn" onclick="exportPDF()">Export PDF</button>
+          </div>
+        </div>
+        <div id="resume-preview">
+          <div class="preview-placeholder">
+            <svg width="48" height="48" fill="none" viewBox="0 0 48 48"><rect x="8" y="6" width="32" height="36" rx="3" stroke="#94A3B8" stroke-width="2"/><line x1="14" y1="16" x2="34" y2="16" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/><line x1="14" y1="22" x2="34" y2="22" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/><line x1="14" y1="28" x2="26" y2="28" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/></svg>
+            <p>Start filling in your details and your resume will appear here in real time.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ATS Result Card (hidden in jobs view) -->
+      <div class="ats-result-card" id="ats-result-card">
+        <div class="ats-card-header">
+          <span id="result-card-title">ATS Score</span>
+          <div style="display:flex;gap:0.5rem;align-items:center;">
+            <span id="ats-score-label" style="color:#94A3B8;font-size:0.7rem;">—</span>
+            <button id="save-report-btn" class="btn btn-ghost" style="display:none;font-size:0.7rem;padding:0.25rem 0.6rem;" onclick="saveATSReport()">💾 Save Report</button>
+            <button id="export-report-btn" class="btn btn-ghost" style="display:none;font-size:0.7rem;padding:0.25rem 0.6rem;" onclick="exportATSReportPDF()">⬇ Export PDF</button>
+          </div>
+        </div>
+        <div class="ats-card-body">
+
+          <!-- Empty state -->
+          <div class="ats-empty" id="ats-empty-state">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="16" stroke="#94A3B8" stroke-width="2"/><path d="M20 12v8l5 3" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/></svg>
+            <p>Upload a resume and click Analyze to get an instant ATS score and suggestions.</p>
+          </div>
+
+          <!-- Loading -->
+          <div id="ats-loading" class="ats-loading" style="display:none;">
+            <div class="spinner"></div>
+            <span id="ats-loading-text" style="font-size:0.82rem;">Analyzing your resume…</span>
+          </div>
+
+          <!-- ── HEALTH RESULTS (Resume Review mode) ── -->
+          <div id="health-results" style="display:none;">
+            <div class="ats-score-row">
+              <div class="score-ring-wrap">
+                <svg width="110" height="110" viewBox="0 0 110 110">
+                  <circle class="score-ring-bg" cx="55" cy="55" r="45"/>
+                  <circle class="score-ring-fill" id="health-score-ring" cx="55" cy="55" r="45"/>
+                </svg>
+                <div class="score-ring-label">
+                  <span class="score-ring-number" id="health-score-number">0</span>
+                  <span class="score-ring-pct">/ 100</span>
+                </div>
+              </div>
+              <div class="ats-breakdown" id="health-breakdown">
+                <!-- filled by renderHealthResults() -->
+              </div>
+            </div>
+            <div class="ats-feedback" id="health-feedback"></div>
+          </div>
+
+          <!-- ── JOB MATCH RESULTS (Job Match mode) ── -->
+          <div id="ats-results" style="display:none;">
+            <div class="ats-score-row">
+              <div class="score-ring-wrap">
+                <svg width="110" height="110" viewBox="0 0 110 110">
+                  <circle class="score-ring-bg" cx="55" cy="55" r="45"/>
+                  <circle class="score-ring-fill" id="score-ring" cx="55" cy="55" r="45"/>
+                </svg>
+                <div class="score-ring-label">
+                  <span class="score-ring-number" id="score-number">0</span>
+                  <span class="score-ring-pct">/ 100</span>
+                </div>
+              </div>
+              <div class="ats-breakdown">
+                <div class="ats-band"><span class="ats-band-label">Keyword Match</span><div class="ats-band-bar-wrap"><div class="ats-band-bar" id="bar-keywords" style="width:0%"></div></div><span class="ats-band-val" id="val-keywords">—</span></div>
+                <div class="ats-band"><span class="ats-band-label">Skills Alignment</span><div class="ats-band-bar-wrap"><div class="ats-band-bar" id="bar-skills" style="width:0%"></div></div><span class="ats-band-val" id="val-skills">—</span></div>
+                <div class="ats-band"><span class="ats-band-label">Experience Relevance</span><div class="ats-band-bar-wrap"><div class="ats-band-bar" id="bar-exp" style="width:0%"></div></div><span class="ats-band-val" id="val-exp">—</span></div>
+                <div class="ats-band"><span class="ats-band-label">Format & Readability</span><div class="ats-band-bar-wrap"><div class="ats-band-bar" id="bar-format" style="width:0%"></div></div><span class="ats-band-val" id="val-format">—</span></div>
+              </div>
+            </div>
+            <div id="keywords-section" style="margin-bottom:1rem;display:none;">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                <div><div class="feedback-title" style="color:var(--green);margin-bottom:0.4rem;">✓ Matching Keywords</div><div id="matching-tags" style="display:flex;flex-wrap:wrap;gap:0.3rem;"></div></div>
+                <div><div class="feedback-title" style="color:var(--red);margin-bottom:0.4rem;">✗ Missing Keywords</div><div id="missing-tags" style="display:flex;flex-wrap:wrap;gap:0.3rem;"></div></div>
+              </div>
+            </div>
+            <div class="ats-feedback" id="ats-feedback"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- AI Helper Output (hidden in jobs view) -->
+      <div class="ai-helper-card" id="ai-helper-card" style="display:none;">
+        <div class="ai-helper-header">
+          <span>AI Generated Content</span>
+          <span class="ai-badge">Gemini AI</span>
+        </div>
+        <div class="ai-helper-body">
+          <div class="ai-output" id="ai-output-box"></div>
+          <div class="ai-output-actions" id="ai-output-actions">
+            <button class="btn btn-primary" onclick="applyAIContent()" style="font-size:0.78rem;">Apply to Resume</button>
+            <button class="btn" onclick="copyAIOutput()" style="background:var(--bg);color:var(--slate);border:1px solid var(--border);font-size:0.78rem;">Copy</button>
+            <button class="btn" onclick="runAIHelp()" style="background:var(--bg);color:var(--slate);border:1px solid var(--border);font-size:0.78rem;">Regenerate</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- JOB TRACKER PANEL (shown only in jobs view) -->
+      <div id="jobs-panel" style="display:none;">
+        <!-- Stats row -->
+        <div class="jobs-stats-row" id="jobs-stats"></div>
+        <!-- ATS Reports -->
+        <div class="ats-result-card" id="reports-card" style="display:none;">
+          <div class="ats-card-header" style="cursor:pointer;" onclick="toggleReportsPanel()">
+            <span>Saved ATS Reports</span>
+            <span id="reports-toggle-icon" style="color:#94A3B8;font-size:0.8rem;">▼ Show</span>
+          </div>
+          <div id="reports-list-panel" style="display:none;padding:1rem;">
+            <div id="reports-list"></div>
+          </div>
+        </div>
+        <!-- Job cards -->
+        <div id="jobs-grid" class="jobs-grid">
+          <div class="preview-placeholder" style="min-height:280px;">
+            <svg width="48" height="48" fill="none" viewBox="0 0 48 48"><rect x="6" y="10" width="36" height="30" rx="3" stroke="#94A3B8" stroke-width="2"/><line x1="14" y1="20" x2="34" y2="20" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/><line x1="14" y1="26" x2="26" y2="26" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/><path d="M30 6v8M18 6v8" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/></svg>
+            <p>No applications yet. Add your first job using the form on the left.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- end app-body -->
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- Bullet Improver Modal -->
+<div class="modal-overlay" id="bulletModal" style="display:none;">
+  <div class="modal">
+    <div class="modal-header">
+      <div style="font-family:'DM Serif Display',serif;font-size:1.1rem;color:var(--navy);">✦ Improve Bullet Points</div>
+      <button class="modal-close" onclick="closeBulletModal()">✕</button>
+    </div>
+    <div class="field-group"><label>Current bullet point</label><textarea id="bullet-input" rows="3" placeholder="Managed a team of engineers and delivered projects on time..."></textarea></div>
+    <div class="field-group"><label>Role context</label><input type="text" id="bullet-role" placeholder="e.g. Senior Software Engineer"></div>
+    <button class="analyze-btn" id="improveBulletBtn" onclick="improveBullet()"><span id="improve-btn-text">✦ Improve with AI</span></button>
+    <div id="bullet-result" class="ai-output" style="margin-top:0.75rem;display:none;"></div>
+    <div id="bullet-actions" style="display:none;margin-top:0.5rem;" class="ai-output-actions">
+      <button class="btn btn-primary" onclick="copyBulletResult()" style="font-size:0.78rem;">Copy Result</button>
+    </div>
+  </div>
+</div>
+
+<!-- Load Resumes Modal -->
+<div class="modal-overlay" id="loadModal" style="display:none;">
+  <div class="modal" style="max-width:580px;">
+    <div class="modal-header">
+      <div style="font-family:'DM Serif Display',serif;font-size:1.1rem;color:var(--navy);">Saved Resumes</div>
+      <button class="modal-close" onclick="closeLoadModal()">✕</button>
+    </div>
+    <div id="saved-list" style="display:flex;flex-direction:column;gap:0.5rem;max-height:400px;overflow-y:auto;"></div>
+  </div>
+</div>
+
+<!-- Edit Job Modal -->
+<div class="modal-overlay" id="editJobModal" style="display:none;">
+  <div class="modal" style="max-width:540px;">
+    <div class="modal-header">
+      <div style="font-family:'DM Serif Display',serif;font-size:1.1rem;color:var(--navy);">Edit Application</div>
+      <button class="modal-close" onclick="closeEditJobModal()">✕</button>
+    </div>
+    <input type="hidden" id="edit-job-id">
+    <div class="field-row">
+      <div class="field-group"><label>Job Title</label><input type="text" id="edit-job-title" placeholder="Software Engineer"></div>
+      <div class="field-group"><label>Company</label><input type="text" id="edit-job-company" placeholder="Acme Corp"></div>
+    </div>
+    <div class="field-group"><label>Job URL</label><input type="url" id="edit-job-url" placeholder="https://..."></div>
+    <div class="field-row">
+      <div class="field-group">
+        <label>Status</label>
+        <select id="edit-job-status">
+          <option value="saved">📌 Saved</option>
+          <option value="applied">📤 Applied</option>
+          <option value="interview">💬 Interview</option>
+          <option value="offer">🎉 Offer</option>
+          <option value="rejected">❌ Rejected</option>
+        </select>
+      </div>
+      <div class="field-group"><label>Date Applied</label><input type="text" id="edit-job-date" placeholder="Jun 2024"></div>
+    </div>
+    <div class="field-group"><label>ATS Score (if known)</label><input type="number" id="edit-job-ats" placeholder="e.g. 78" min="0" max="100"></div>
+    <div class="field-group"><label>Notes</label><textarea id="edit-job-notes" rows="3" placeholder="Recruiter name, salary, next steps..."></textarea></div>
+    <button class="analyze-btn" onclick="saveEditJob()"><span>Save Changes</span></button>
+  </div>
+</div>
+
+<!-- ATS Report Detail Modal -->
+<div class="modal-overlay" id="reportDetailModal" style="display:none;">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal-header">
+      <div style="font-family:'DM Serif Display',serif;font-size:1.1rem;color:var(--navy);" id="report-modal-title">ATS Report</div>
+      <button class="modal-close" onclick="document.getElementById('reportDetailModal').style.display='none'">✕</button>
+    </div>
+    <div id="report-modal-body"></div>
+    <div style="display:flex;gap:0.5rem;margin-top:1rem;">
+      <button class="btn btn-primary" id="report-modal-export-btn" style="font-size:0.8rem;">⬇ Export PDF</button>
+      <button class="btn" onclick="document.getElementById('reportDetailModal').style.display='none'" style="background:var(--bg);border:1px solid var(--border);font-size:0.8rem;">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="/static/script.js"></script>
+</body>
+</html>
