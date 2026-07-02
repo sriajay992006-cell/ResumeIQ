@@ -1,1 +1,1 @@
-# ResumeIQ
+# RESUMEIQ
